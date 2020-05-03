@@ -1,3 +1,7 @@
+extern "C" {
+#include <planckclock.h>
+}
+
 #include "modules/date.hpp"
 #include "drawtypes/label.hpp"
 
@@ -17,6 +21,8 @@ namespace modules {
     m_dateformat_alt = m_conf.get(name(), "date-alt", ""s);
     m_timeformat = m_conf.get(name(), "time", ""s);
     m_timeformat_alt = m_conf.get(name(), "time-alt", ""s);
+
+    m_useplancktime = m_conf.get(name(), "useplancktime", false);
 
     if (m_dateformat.empty() && m_timeformat.empty()) {
       throw module_error("No date or time format specified");
@@ -39,26 +45,50 @@ namespace modules {
   }
 
   bool date_module::update() {
-    auto time = std::time(nullptr);
+    if (!m_useplancktime) {
+      auto time = std::time(nullptr);
 
-    auto date_format = m_toggled ? m_dateformat_alt : m_dateformat;
-    // Clear stream contents
-    datetime_stream.str("");
-    datetime_stream << std::put_time(localtime(&time), date_format.c_str());
-    auto date_string = datetime_stream.str();
+      auto date_format = m_toggled ? m_dateformat_alt : m_dateformat;
+      // Clear stream contents
+      datetime_stream.str("");
+      datetime_stream << std::put_time(localtime(&time), date_format.c_str());
+      auto date_string = datetime_stream.str();
 
-    auto time_format = m_toggled ? m_timeformat_alt : m_timeformat;
-    // Clear stream contents
-    datetime_stream.str("");
-    datetime_stream << std::put_time(localtime(&time), time_format.c_str());
-    auto time_string = datetime_stream.str();
+      auto time_format = m_toggled ? m_timeformat_alt : m_timeformat;
+      // Clear stream contents
+      datetime_stream.str("");
+      datetime_stream << std::put_time(localtime(&time), time_format.c_str());
+      auto time_string = datetime_stream.str();
 
-    if (m_date == date_string && m_time == time_string) {
-      return false;
+      if (m_date == date_string && m_time == time_string) {
+        return false;
+      }
+
+      m_date = date_string;
+      m_time = time_string;
+    } else {
+      auto time = planck_time(nullptr);
+
+      auto date_format = m_toggled ? m_dateformat_alt : m_dateformat;
+      // Clear stream contents
+      datetime_stream.str("");
+      planck_tm* tm = planck_localtime(&time);
+      std::size_t sz = sizeof(planck_tm) + 1;
+      char* str = static_cast<char *>(malloc(sz));
+      planck_strftime(str, sz, date_format.c_str(), tm);
+
+      datetime_stream << str;
+      auto date_string = datetime_stream.str();
+
+      free(tm);
+      free(str);
+
+      if (m_date == date_string) {
+        return false;
+      }
+
+      m_date = date_string;
     }
-
-    m_date = date_string;
-    m_time = time_string;
 
     if (m_label) {
       m_label->reset_tokens();

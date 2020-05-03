@@ -37,6 +37,8 @@ namespace modules {
     string m_date;
     string m_time;
 
+    bool m_useplancktime;
+
     // Single stringstream to be used to gather the results of std::put_time
     std::stringstream datetime_stream;
 
