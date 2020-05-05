@@ -67,21 +67,31 @@ namespace modules {
       m_date = date_string;
       m_time = time_string;
     } else {
-      auto time = planck_time(nullptr);
+      planck_tm* tm_now = nullptr;
+      planck_tm tm_next_nov;
+      planck_time_t time_next_nov = planck_time_now(&tm_now) + 1;
+      planck_tm_at_planck_time(&tm_next_nov, time_next_nov);
+
+      struct timeval tv_now{};
+      struct timeval tv_next_nov{};
+      struct timeval tv_difference{};
+      tv_at_planck_time(&tv_now, tm_now);
+      tv_at_planck_time(&tv_next_nov, &tm_next_nov);
+      planck_difftime_get_tv(tm_now, &tm_next_nov, &tv_difference);
 
       auto date_format = m_toggled ? m_dateformat_alt : m_dateformat;
       // Clear stream contents
       datetime_stream.str("");
-      planck_tm* tm = planck_localtime(&time);
-      std::size_t sz = sizeof(planck_tm) + 1;
-      char* str = static_cast<char *>(malloc(sz));
-      planck_strftime(str, sz, date_format.c_str(), tm);
 
-      datetime_stream << str;
+      std::array<char, sizeof(planck_tm) + 1> str{0};
+      planck_strftime(str.data(), sizeof(planck_tm), date_format.c_str(), tm_now);
+
+      datetime_stream << str.data();
       auto date_string = datetime_stream.str();
 
-      free(tm);
-      free(str);
+      const auto begin = std::chrono::seconds(tv_now.tv_sec) + std::chrono::microseconds(tv_now.tv_usec);
+      const auto end = std::chrono::seconds(tv_next_nov.tv_sec) + std::chrono::microseconds(tv_next_nov.tv_usec);
+      m_interval = end - begin;
 
       if (m_date == date_string) {
         return false;
