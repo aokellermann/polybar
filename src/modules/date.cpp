@@ -23,6 +23,7 @@ namespace modules {
     m_timeformat_alt = m_conf.get(name(), "time-alt", ""s);
 
     m_useplancktime = m_conf.get(name(), "useplancktime", false);
+    m_useplancktime_alt = m_conf.get(name(), "useplancktime-alt", false);
 
     if (m_dateformat.empty() && m_timeformat.empty()) {
       throw module_error("No date or time format specified");
@@ -45,7 +46,7 @@ namespace modules {
   }
 
   bool date_module::update() {
-    if (!m_useplancktime) {
+    if (toggled_dateformat_is_gregorian()) {
       auto time = std::time(nullptr);
 
       auto date_format = m_toggled ? m_dateformat_alt : m_dateformat;
@@ -98,6 +99,7 @@ namespace modules {
       }
 
       m_date = date_string;
+      m_time = std::string();  // Planck clock only uses date. If switching from gregorian, this will be non-empty
     }
 
     if (m_label) {
@@ -130,6 +132,12 @@ namespace modules {
       return false;
     }
     m_toggled = !m_toggled;
+
+    // If switching from planck to gregorian, reload update interval, since planck update interval is dynamic
+    if (toggled_dateformat_is_gregorian()) {
+      m_interval = m_conf.get<decltype(m_interval)>(name(), "interval", 1s);
+    }
+
     wakeup();
     return true;
   }

@@ -38,11 +38,15 @@ namespace modules {
     string m_time;
 
     bool m_useplancktime;
+    bool m_useplancktime_alt;
 
     // Single stringstream to be used to gather the results of std::put_time
     std::stringstream datetime_stream;
 
     std::atomic<bool> m_toggled{false};
+
+    inline bool toggled_dateformat_is_gregorian() const
+    { return (!m_toggled && !m_useplancktime) || (m_toggled && !m_useplancktime_alt); }
   };
 }
 
