@@ -73,7 +73,7 @@ include_directories(${PLANCKCLOCK_INCLUDE_DIR})
 
 add_library(poly STATIC ${files})
 target_include_directories(poly PUBLIC ${dirs})
-target_link_libraries(poly ${libs} Threads::Threads ${PLANCKCLOCK_LIBRARY} gmp)
+target_link_libraries(poly ${libs} Threads::Threads ${PLANCKCLOCK_LIBRARY})
 target_compile_options(poly PUBLIC $<$<CXX_COMPILER_ID:GNU>:$<$<CONFIG:MinSizeRel>:-flto>>)
 
 add_executable(polybar main.cpp)

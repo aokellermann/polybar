@@ -6,6 +6,6 @@ find_path(PLANCKCLOCK_INCLUDE_DIR planckclock.h
         PATHS $(FIND_PLANCKCLOCK_PATHS))
 
 find_library(PLANCKCLOCK_LIBRARY
-        NAMES planckclocklib
+        NAMES planckclock
         PATH_SUFFIXES lib
         PATHS $(FIND_PLANCKCLOCK_PATHS))
